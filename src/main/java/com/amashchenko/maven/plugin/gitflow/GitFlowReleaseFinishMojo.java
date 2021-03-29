@@ -15,20 +15,22 @@
  */
 package com.amashchenko.maven.plugin.gitflow;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.shared.release.versions.VersionParseException;
+import org.codehaus.plexus.components.interactivity.PrompterException;
 import org.codehaus.plexus.util.StringUtils;
+import org.codehaus.plexus.util.cli.CommandLineException;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The git flow release finish mojo.
- *
  */
 @Mojo(name = "release-finish", aggregator = true)
 public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
@@ -99,8 +101,7 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
     private boolean digitsOnlyDevVersion = false;
 
     /**
-     * Development version to use instead of the default next development
-     * version in non interactive mode.
+     * Development version to use instead of the default next development version in non interactive mode.
      *
      * @since 1.6.0
      */
@@ -108,8 +109,13 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
     private String developmentVersion = "";
 
     /**
-     * Which digit to increment in the next development version. Starts from
-     * zero.
+     * Release version
+     */
+    @Parameter(property = "releaseVersion", defaultValue = "")
+    private String releaseVersion = "";
+
+    /**
+     * Which digit to increment in the next development version. Starts from zero.
      *
      * @since 1.6.0
      */
@@ -182,7 +188,7 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
             if (StringUtils.isBlank(releaseBranch)) {
                 if (fetchRemote) {
                     releaseBranch = gitFetchAndFindRemoteBranches(gitFlowConfig.getOrigin(),
-                            gitFlowConfig.getReleaseBranchPrefix(), false).trim();
+                        gitFlowConfig.getReleaseBranchPrefix(), false).trim();
                     if (StringUtils.isBlank(releaseBranch)) {
                         throw new MojoFailureException("There is no remote or local release branch.");
                     }
@@ -192,7 +198,7 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
 
                     if (StringUtils.countMatches(releaseBranch, gitFlowConfig.getReleaseBranchPrefix()) > 1) {
                         throw new MojoFailureException(
-                                "More than one remote release branch exists. Cannot finish release.");
+                            "More than one remote release branch exists. Cannot finish release.");
                     }
 
                     gitCreateAndCheckout(releaseBranch, gitFlowConfig.getOrigin() + "/" + releaseBranch);
@@ -202,7 +208,7 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
             }
             if (StringUtils.countMatches(releaseBranch, gitFlowConfig.getReleaseBranchPrefix()) > 1) {
                 throw new MojoFailureException(
-                        "More than one release branch exists. Cannot finish release.");
+                    "More than one release branch exists. Cannot finish release.");
             }
 
             // check snapshots dependencies
@@ -228,7 +234,7 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
 
                     // fetch and check remote
                     gitFetchRemoteAndCompare(gitFlowConfig
-                            .getProductionBranch());
+                        .getProductionBranch());
                 }
             }
 
@@ -245,17 +251,18 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
                 mvnRun(preReleaseGoals);
             }
 
-            String currentReleaseVersion = getCurrentProjectVersion();
+            String currentReleaseVersion = getReleaseVersion();
 
             Map<String, String> messageProperties = new HashMap<String, String>();
             messageProperties.put("version", currentReleaseVersion);
 
-            if (useSnapshotInRelease && ArtifactUtils.isSnapshot(currentReleaseVersion)) {
-                String commitVersion = currentReleaseVersion.replace("-" + Artifact.SNAPSHOT_VERSION, "");
+            if (useSnapshotInRelease) {
+                if (ArtifactUtils.isSnapshot(currentReleaseVersion)) {
+                    currentReleaseVersion = currentReleaseVersion.replace("-" + Artifact.SNAPSHOT_VERSION, "");
+                }
+                mvnSetVersions(currentReleaseVersion);
 
-                mvnSetVersions(commitVersion);
-
-                messageProperties.put("version", commitVersion);
+                messageProperties.put("version", currentReleaseVersion);
 
                 gitCommit(commitMessages.getReleaseFinishMessage(), messageProperties);
             }
@@ -265,7 +272,7 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
                 gitCheckout(gitFlowConfig.getProductionBranch());
 
                 gitMerge(releaseBranch, releaseRebase, releaseMergeNoFF, releaseMergeFFOnly, commitMessages.getReleaseFinishMergeMessage(),
-                        messageProperties);
+                    messageProperties);
             }
 
             // get current project version from pom
@@ -275,14 +282,14 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
                 String tagVersion = currentVersion;
                 if ((tychoBuild || useSnapshotInRelease) && ArtifactUtils.isSnapshot(currentVersion)) {
                     tagVersion = currentVersion.replace("-"
-                            + Artifact.SNAPSHOT_VERSION, "");
+                        + Artifact.SNAPSHOT_VERSION, "");
                 }
 
                 messageProperties.put("version", tagVersion);
 
                 // git tag -a ...
                 gitTag(gitFlowConfig.getVersionTagPrefix() + tagVersion,
-                        commitMessages.getTagReleaseMessage(), gpgSignTag, messageProperties);
+                    commitMessages.getTagReleaseMessage(), gpgSignTag, messageProperties);
             }
 
             // maven goals after merge
@@ -306,7 +313,7 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
 
                 // merge branch master into develop
                 gitMerge(releaseBranch, releaseRebase, releaseMergeNoFF, false,
-                        commitMessages.getReleaseFinishDevMergeMessage(), messageProperties);
+                    commitMessages.getReleaseFinishDevMergeMessage(), messageProperties);
 
                 if (commitDevelopmentVersionAtStart && useSnapshotInRelease) {
                     // updating develop poms version back to pre merge state
@@ -319,8 +326,8 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
 
             if (commitDevelopmentVersionAtStart && !notSameProdDevName()) {
                 getLog().warn(
-                        "The commitDevelopmentVersionAtStart will not have effect. "
-                                + "It can be enabled only when there are separate branches for development and production.");
+                    "The commitDevelopmentVersionAtStart will not have effect. "
+                        + "It can be enabled only when there are separate branches for development and production.");
                 commitDevelopmentVersionAtStart = false;
             }
 
@@ -328,22 +335,22 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
                 // get next snapshot version
                 final String nextSnapshotVersion;
                 if (!settings.isInteractiveMode()
-                        && StringUtils.isNotBlank(developmentVersion)) {
+                    && StringUtils.isNotBlank(developmentVersion)) {
                     nextSnapshotVersion = developmentVersion;
                 } else {
                     GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(
-                            currentVersion);
+                        currentVersion);
                     if (digitsOnlyDevVersion) {
                         versionInfo = versionInfo.digitsVersionInfo();
                     }
 
                     nextSnapshotVersion = versionInfo
-                            .nextSnapshotVersion(versionDigitToIncrement);
+                        .nextSnapshotVersion(versionDigitToIncrement);
                 }
 
                 if (StringUtils.isBlank(nextSnapshotVersion)) {
                     throw new MojoFailureException(
-                            "Next snapshot version is blank.");
+                        "Next snapshot version is blank.");
                 }
 
                 // mvn versions:set -DnewVersion=... -DgenerateBackupPoms=false
@@ -378,5 +385,51 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
         } catch (Exception e) {
             throw new MojoFailureException("release-finish", e);
         }
+    }
+
+    private String getReleaseVersion() throws MojoFailureException, VersionParseException, CommandLineException {
+        // get current project version from pom
+        final String currentVersion = getCurrentProjectVersion();
+
+        String defaultVersion = null;
+        if (tychoBuild) {
+            defaultVersion = currentVersion;
+        } else {
+            // get default release version
+            defaultVersion = new GitFlowVersionInfo(currentVersion)
+                .getReleaseVersionString();
+        }
+
+        if (defaultVersion == null) {
+            throw new MojoFailureException(
+                "Cannot get default project version.");
+        }
+
+        String version = null;
+        if (settings.isInteractiveMode()) {
+            try {
+                while (version == null) {
+                    version = prompter.prompt("What is release version? ["
+                        + defaultVersion + "]");
+
+                    if (!"".equals(version)
+                        && (!GitFlowVersionInfo.isValidVersion(version) || !validBranchName(version))) {
+                        getLog().info("The version is not valid.");
+                        version = null;
+                    }
+                }
+            } catch (PrompterException e) {
+                throw new MojoFailureException("release-start", e);
+            }
+        } else {
+            version = releaseVersion;
+        }
+
+        if (StringUtils.isBlank(version)) {
+            getLog().info("Version is blank. Using default version.");
+            version = defaultVersion;
+        }
+
+        return version;
     }
 }
