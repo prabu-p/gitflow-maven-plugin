@@ -167,7 +167,7 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
             Map<String, String> messageProperties = new HashMap<String, String>();
             messageProperties.put("version", currentReleaseVersion);
 
-            if (ArtifactUtils.isSnapshot(currentReleaseVersion)) {
+            if (useSnapshotInSupport && ArtifactUtils.isSnapshot(currentReleaseVersion)) {
                 String commitVersion = currentReleaseVersion.replace("-" + Artifact.SNAPSHOT_VERSION, "");
 
                 mvnSetVersions(commitVersion);
