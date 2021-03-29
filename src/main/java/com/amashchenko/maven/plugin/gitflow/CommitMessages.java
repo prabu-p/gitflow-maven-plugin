@@ -45,6 +45,7 @@ public class CommitMessages {
 
     private String tagHotfixMessage;
     private String tagReleaseMessage;
+    private String tagSupportMessage;
 
     private String updateDevToAvoidConflictsMessage;
     private String updateDevBackPreMergeStateMessage;
@@ -76,6 +77,7 @@ public class CommitMessages {
 
         tagHotfixMessage = "Tag hotfix";
         tagReleaseMessage = "Tag release";
+        tagSupportMessage = "Tag Support";
 
         updateDevToAvoidConflictsMessage = "Update develop to production version to avoid merge conflicts";
         updateDevBackPreMergeStateMessage = "Update develop version back to pre-merge state";
@@ -426,10 +428,17 @@ public class CommitMessages {
     }
 
     /**
-     * @param supportStartMessage
-     *            the supportStartMessage to set
+     * @param supportStartMessage the supportStartMessage to set
      */
     public void setSupportStartMessage(String supportStartMessage) {
         this.supportStartMessage = supportStartMessage;
+    }
+
+    public String getTagSupportMessage() {
+        return tagSupportMessage;
+    }
+
+    public void setTagSupportMessage(String tagSupportMessage) {
+        this.tagSupportMessage = tagSupportMessage;
     }
 }
