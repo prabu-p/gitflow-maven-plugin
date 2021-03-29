@@ -1,4 +1,4 @@
-<!-- 
+<!--
 /*
  * Copyright 2014-2021 Aleksandr Mashchenko.
  *
@@ -21,7 +21,7 @@
     <artifactId>gitflow-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
     <name>gitflow-maven-plugin</name>
-    <version>1.16.1-SNAPSHOT</version>
+    <version>1.16.0-NX-SNAPSHOT</version>
 
     <description>The Git-Flow Maven Plugin supports various Git workflows, including Vincent Driessen's successful Git branching model and GitHub Flow. This plugin runs Git and Maven commands from the command line. Supports Eclipse Plugins build with Tycho.</description>
 
@@ -33,7 +33,7 @@
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
         </license>
-    </licenses> 
+    </licenses>
 
     <developers>
         <developer>
@@ -48,7 +48,7 @@
         <connection>scm:git:git@github.com:aleksandr-m/gitflow-maven-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:aleksandr-m/gitflow-maven-plugin.git</developerConnection>
     </scm>
-
+    <!--
     <distributionManagement>
         <repository>
             <id>sonatype-nexus-staging</id>
@@ -61,7 +61,7 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
-
+    -->
     <properties>
         <java.version>1.7</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
