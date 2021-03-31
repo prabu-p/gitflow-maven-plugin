@@ -207,7 +207,7 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
             }
 
             // Checkout prod branch
-            gitCheckout(gitFlowConfig.getProductionBranch());
+            gitFetchRemoteAndCreate(gitFlowConfig.getProductionBranch());
             if (!keepBranch) {
                 // git branch -d support/...
                 gitBranchDelete(supportBranch);
