@@ -15,10 +15,6 @@
  */
 package com.amashchenko.maven.plugin.gitflow;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -29,9 +25,13 @@ import org.codehaus.plexus.components.interactivity.PrompterException;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.cli.CommandLineException;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * The git flow support start mojo.
- * 
+ *
  * @since 1.5.0
  */
 @Mojo(name = "support-start", aggregator = true)
@@ -39,7 +39,7 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
 
     /**
      * Whether to push to the remote.
-     * 
+     *
      * @since 1.6.0
      */
     @Parameter(property = "pushRemote", defaultValue = "true")
@@ -62,14 +62,22 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
     private String supportBranchName;
 
     /**
+     * Support version
+     */
+    @Parameter(property = "supportVersion", defaultValue = "")
+    private String supportVersion = "";
+
+    /**
      * Whether to use snapshot in support.
-     * 
+     *
      * @since 1.16.0
      */
     @Parameter(property = "useSnapshotInSupport", defaultValue = "false")
     private boolean useSnapshotInSupport;
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         validateConfiguration();
@@ -125,20 +133,15 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
 
             // git checkout -b ... tag
             gitCreateAndCheckout(gitFlowConfig.getSupportBranchPrefix() + branchName, tag);
-
-            if (useSnapshotInSupport) {
-                String version = getCurrentProjectVersion();
-                if (!ArtifactUtils.isSnapshot(version)) {
-                    version = version + "-" + Artifact.SNAPSHOT_VERSION;
-                    
-                    mvnSetVersions(version);
-
-                    Map<String, String> properties = new HashMap<String, String>();
-                    properties.put("version", version);
-
-                    gitCommit(commitMessages.getSupportStartMessage(), properties);
-                }
+            String version = StringUtils.isNotBlank(supportVersion) ? supportVersion : getCurrentProjectVersion();
+            if (useSnapshotInSupport && !ArtifactUtils.isSnapshot(version)) {
+                version = version + "-" + Artifact.SNAPSHOT_VERSION;
             }
+
+            mvnSetVersions(version);
+            Map<String, String> properties = new HashMap<String, String>();
+            properties.put("version", version);
+            gitCommit(commitMessages.getSupportStartMessage(), properties);
 
             if (installProject) {
                 // mvn clean install
