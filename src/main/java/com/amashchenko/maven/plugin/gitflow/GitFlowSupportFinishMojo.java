@@ -69,15 +69,6 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
     private boolean pushRemote;
 
     /**
-     * Whether to remove qualifiers from the next development version.
-     *
-     * @since 1.6.0
-     */
-    @Parameter(property = "digitsOnlyDevVersion", defaultValue = "false")
-    private boolean digitsOnlyDevVersion = false;
-
-
-    /**
      * Maven goals to execute in the support branch.
      *
      * @since 1.8.0
@@ -148,7 +139,6 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
 
             // check snapshots dependencies
             if (!allowSnapshots) {
-
                 checkSnapshotDependencies();
             }
 

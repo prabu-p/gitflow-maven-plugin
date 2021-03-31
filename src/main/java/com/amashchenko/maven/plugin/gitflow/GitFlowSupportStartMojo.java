@@ -21,6 +21,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.shared.release.versions.VersionParseException;
 import org.codehaus.plexus.components.interactivity.PrompterException;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.cli.CommandLineException;
@@ -76,6 +77,12 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
     private boolean useSnapshotInSupport;
 
     /**
+     * Version digit to increment
+     */
+    @Parameter(property = "versionDigitToIncrement")
+    private Integer versionDigitToIncrement = 3;
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -89,7 +96,7 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
             // check uncommitted changes
             checkUncommittedChanges();
 
-            String tag = null;
+            String tag = tagName;
             if (settings.isInteractiveMode()) {
                 // get tags
                 String tagsStr = gitFindTags();
@@ -109,13 +116,14 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
                 throw new MojoFailureException("Tag is blank.");
             }
 
-            if (gitCheckTagExists(tagName)) {
-                tag = tagName;
-            } else {
+            if (!gitCheckTagExists(tag)) {
                 throw new MojoFailureException("The tag '" + tagName + "' doesn't exist.");
             }
 
-            String version = StringUtils.isNotBlank(supportVersion) ? supportVersion : getCurrentProjectVersion();
+            // Checkout tag
+            gitCheckout(tag);
+
+            String version = getReleaseVersion();
             String branchName = version;
             if (StringUtils.isNotBlank(supportBranch)) {
                 branchName = supportBranch;
@@ -149,6 +157,57 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
             }
         } catch (CommandLineException e) {
             throw new MojoFailureException("support-start", e);
+        } catch (VersionParseException e) {
+            throw new MojoFailureException("support-start", e);
         }
+    }
+
+    private String getReleaseVersion() throws MojoFailureException, VersionParseException, CommandLineException {
+        // get current project version from pom
+        final String currentVersion = getCurrentProjectVersion();
+        String defaultVersion = null;
+        if (tychoBuild) {
+            defaultVersion = currentVersion;
+        } else {
+            // get default release version
+            GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(currentVersion);
+            defaultVersion = versionInfo.getReleaseVersionString();
+            int i = versionDigitToIncrement;
+            if (i > versionInfo.getDigits().size()) {
+                while (i > versionInfo.getDigits().size()) {
+                    defaultVersion = defaultVersion + ".0";
+                    i--;
+                }
+                versionInfo = new GitFlowVersionInfo(defaultVersion);
+            }
+            defaultVersion = versionInfo.getNextVersion().getReleaseVersionString();
+        }
+
+        if (defaultVersion == null) {
+            throw new MojoFailureException("Cannot get default project version.");
+        }
+
+        String version = null;
+        if (settings.isInteractiveMode()) {
+            try {
+                while (version == null) {
+                    version = prompter.prompt("What is release version? [" + defaultVersion + "]");
+                    if (!"".equals(version) && (!GitFlowVersionInfo.isValidVersion(version) || !validBranchName(version))) {
+                        getLog().info("The version is not valid.");
+                        version = null;
+                    }
+                }
+            } catch (PrompterException e) {
+                throw new MojoFailureException("support-start", e);
+            }
+        } else {
+            version = supportVersion;
+        }
+
+        if (StringUtils.isBlank(version)) {
+            getLog().info("Version is blank. Using default version " + defaultVersion);
+            version = defaultVersion;
+        }
+        return version;
     }
 }
