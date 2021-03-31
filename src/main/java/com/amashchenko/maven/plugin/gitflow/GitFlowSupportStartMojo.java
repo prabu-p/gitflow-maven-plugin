@@ -100,23 +100,19 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
 
                 try {
                     tag = prompter.prompt("Choose tag to start support branch",
-                            Arrays.asList(tagsStr.split("\\r?\\n")));
+                        Arrays.asList(tagsStr.split("\\r?\\n")));
                 } catch (PrompterException e) {
                     throw new MojoFailureException("support-start", e);
                 }
-            } else if (StringUtils.isNotBlank(tagName)) {
-                if (gitCheckTagExists(tagName)) {
-                    tag = tagName;
-                } else {
-                    throw new MojoFailureException("The tag '" + tagName + "' doesn't exist.");
-                }
-            } else {
-                getLog().info("The tagName is blank. Using the last tag.");
-                tag = gitFindLastTag();
             }
-
             if (StringUtils.isBlank(tag)) {
                 throw new MojoFailureException("Tag is blank.");
+            }
+
+            if (gitCheckTagExists(tagName)) {
+                tag = tagName;
+            } else {
+                throw new MojoFailureException("The tag '" + tagName + "' doesn't exist.");
             }
 
             String version = StringUtils.isNotBlank(supportVersion) ? supportVersion : getCurrentProjectVersion();
