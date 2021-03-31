@@ -170,7 +170,7 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
             defaultVersion = currentVersion;
         } else {
             // get default release version
-            GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(currentVersion);
+            GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(currentVersion).digitsVersionInfo();
             defaultVersion = versionInfo.getReleaseVersionString();
             int i = versionDigitToIncrement;
             if (i > versionInfo.getDigits().size()) {

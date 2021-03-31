@@ -239,18 +239,14 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
             }
 
             String currentReleaseVersion = getReleaseVersion();
-            System.out.println("Current Release version : " + currentReleaseVersion);
-
             Map<String, String> messageProperties = new HashMap<>();
-            messageProperties.put("version", currentReleaseVersion);
-
             if (ArtifactUtils.isSnapshot(currentReleaseVersion)) {
                 currentReleaseVersion = currentReleaseVersion.replace("-" + Artifact.SNAPSHOT_VERSION, "");
             }
 
             mvnSetVersions(currentReleaseVersion);
             messageProperties.put("version", currentReleaseVersion);
-            gitCommit(commitMessages.getReleaseFinishMessage(), messageProperties);
+            gitCommit(commitMessages.getReleaseUpdateMessage(), messageProperties);
 
             // get current project version from pom
             final String currentVersion = getCurrentProjectVersion();
@@ -289,7 +285,7 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
             messageProperties.put("version", nextSnapshotVersion);
 
             // git commit -a -m updating for next development version
-            gitCommit(commitMessages.getReleaseFinishMessage(), messageProperties);
+            gitCommit(commitMessages.getReleaseStartMessage(), messageProperties);
 
             if (installProject) {
                 // mvn clean install
@@ -300,7 +296,6 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
                 gitPush(releaseBranch, !skipTag);
             }
         } catch (Exception e) {
-            e.printStackTrace();
             throw new MojoFailureException("release-update", e);
         }
     }
@@ -314,30 +309,25 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
             defaultVersion = currentVersion;
         } else {
             // get default release version
-            defaultVersion = new GitFlowVersionInfo(currentVersion)
-                .getReleaseVersionString();
+            defaultVersion = new GitFlowVersionInfo(currentVersion).getReleaseVersionString();
         }
 
         if (defaultVersion == null) {
-            throw new MojoFailureException(
-                "Cannot get default project version.");
+            throw new MojoFailureException("Cannot get default project version.");
         }
 
         String version = null;
         if (settings.isInteractiveMode()) {
             try {
                 while (version == null) {
-                    version = prompter.prompt("What is release version? ["
-                        + defaultVersion + "]");
-
-                    if (!"".equals(version)
-                        && (!GitFlowVersionInfo.isValidVersion(version) || !validBranchName(version))) {
+                    version = prompter.prompt("What is release version? [" + defaultVersion + "]");
+                    if (!"".equals(version) && (!GitFlowVersionInfo.isValidVersion(version) || !validBranchName(version))) {
                         getLog().info("The version is not valid.");
                         version = null;
                     }
                 }
             } catch (PrompterException e) {
-                throw new MojoFailureException("release-start", e);
+                throw new MojoFailureException("release-update", e);
             }
         } else {
             version = releaseVersion;

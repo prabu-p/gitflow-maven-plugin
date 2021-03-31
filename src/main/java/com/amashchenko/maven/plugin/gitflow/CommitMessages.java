@@ -30,6 +30,7 @@ public class CommitMessages {
 
     private String releaseStartMessage;
     private String releaseFinishMessage;
+    private String releaseUpdateMessage;
 
     private String releaseVersionUpdateMessage;
 
@@ -70,6 +71,7 @@ public class CommitMessages {
 
         releaseStartMessage = "Update versions for release";
         releaseFinishMessage = "Update for next development version";
+        releaseUpdateMessage = "Update versions for release";
 
         releaseVersionUpdateMessage = "Update for next development version";
 
@@ -450,5 +452,13 @@ public class CommitMessages {
 
     public void setTagSupportMessage(String tagSupportMessage) {
         this.tagSupportMessage = tagSupportMessage;
+    }
+
+    public String getReleaseUpdateMessage() {
+        return releaseUpdateMessage;
+    }
+
+    public void setReleaseUpdateMessage(String releaseUpdateMessage) {
+        this.releaseUpdateMessage = releaseUpdateMessage;
     }
 }
