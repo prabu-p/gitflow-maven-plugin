@@ -57,6 +57,7 @@ public class CommitMessages {
     private String featureFinishIncrementVersionMessage;
 
     private String supportStartMessage;
+    private String supportFinishMessage;
 
     public CommitMessages() {
         featureStartMessage = "Update versions for feature branch";
@@ -77,7 +78,7 @@ public class CommitMessages {
 
         tagHotfixMessage = "Tag hotfix";
         tagReleaseMessage = "Tag release";
-        tagSupportMessage = "Tag Support";
+        tagSupportMessage = "Tag support";
 
         updateDevToAvoidConflictsMessage = "Update develop to production version to avoid merge conflicts";
         updateDevBackPreMergeStateMessage = "Update develop version back to pre-merge state";
@@ -88,7 +89,8 @@ public class CommitMessages {
         updateFeatureBackMessage = "Update feature branch back to feature version";
         featureFinishIncrementVersionMessage = "Increment feature version";
 
-        supportStartMessage = "Update versions for support branch";
+        supportStartMessage = "Update versions for support";
+        supportFinishMessage = "Update versions for support";
     }
 
     /**
@@ -432,6 +434,14 @@ public class CommitMessages {
      */
     public void setSupportStartMessage(String supportStartMessage) {
         this.supportStartMessage = supportStartMessage;
+    }
+
+    public String getSupportFinishMessage() {
+        return supportFinishMessage;
+    }
+
+    public void setSupportFinishMessage(String supportFinishMessage) {
+        this.supportFinishMessage = supportFinishMessage;
     }
 
     public String getTagSupportMessage() {

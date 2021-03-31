@@ -179,7 +179,7 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
 
                 messageProperties.put("version", commitVersion);
 
-                gitCommit(commitMessages.getSupportStartMessage(), messageProperties);
+                gitCommit(commitMessages.getSupportFinishMessage(), messageProperties);
             }
 
             // get current project version from pom

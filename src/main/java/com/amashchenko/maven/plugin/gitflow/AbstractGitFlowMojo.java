@@ -315,7 +315,7 @@ public abstract class AbstractGitFlowMojo extends AbstractMojo {
         // Validate Parent
         Artifact parentArtifact = mavenSession.getTopLevelProject().getParentArtifact();
         if (parentArtifact != null && parentArtifact.isSnapshot()) {
-            throw new MojoFailureException("Parent Cannot be a snapshot: " + parentArtifact.getId());
+            throw new MojoFailureException("Parent cannot be a snapshot: " + parentArtifact.getId());
         }
 
         // Validate Dependencies
