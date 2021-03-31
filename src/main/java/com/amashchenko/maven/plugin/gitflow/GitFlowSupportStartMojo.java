@@ -119,7 +119,8 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
                 throw new MojoFailureException("Tag is blank.");
             }
 
-            String branchName = tag;
+            String version = StringUtils.isNotBlank(supportVersion) ? supportVersion : getCurrentProjectVersion();
+            String branchName = version;
             if (StringUtils.isNotBlank(supportBranchName)) {
                 branchName = supportBranchName;
             }
@@ -133,7 +134,6 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
 
             // git checkout -b ... tag
             gitCreateAndCheckout(gitFlowConfig.getSupportBranchPrefix() + branchName, tag);
-            String version = StringUtils.isNotBlank(supportVersion) ? supportVersion : getCurrentProjectVersion();
             if (useSnapshotInSupport && !ArtifactUtils.isSnapshot(version)) {
                 version = version + "-" + Artifact.SNAPSHOT_VERSION;
             }
