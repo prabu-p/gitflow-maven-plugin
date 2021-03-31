@@ -58,8 +58,8 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
      *
      * @since 1.16.0
      */
-    @Parameter(property = "supportBranchName")
-    private String supportBranchName;
+    @Parameter(property = "supportBranch")
+    private String supportBranch;
 
     /**
      * Support version
@@ -121,8 +121,8 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
 
             String version = StringUtils.isNotBlank(supportVersion) ? supportVersion : getCurrentProjectVersion();
             String branchName = version;
-            if (StringUtils.isNotBlank(supportBranchName)) {
-                branchName = supportBranchName;
+            if (StringUtils.isNotBlank(supportBranch)) {
+                branchName = supportBranch;
             }
 
             // git for-each-ref refs/heads/support/...

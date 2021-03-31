@@ -110,6 +110,12 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
     private boolean useSnapshotInSupport;
 
     /**
+     * Support Branch name
+     */
+    @Parameter(property = "supportBranch")
+    private String supportBranch;
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -120,10 +126,9 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
             // check uncommitted changes
             checkUncommittedChanges();
 
-            // git for-each-ref --format='%(refname:short)' refs/heads/support/*
-            String supportBranch = gitFindBranches(gitFlowConfig.getSupportBranchPrefix(), false).trim();
-
             if (StringUtils.isBlank(supportBranch)) {
+                // git for-each-ref --format='%(refname:short)' refs/heads/support/*
+                supportBranch = gitFindBranches(gitFlowConfig.getSupportBranchPrefix(), false).trim();
                 if (fetchRemote) {
                     supportBranch = gitFetchAndFindRemoteBranches(gitFlowConfig.getOrigin(),
                         gitFlowConfig.getSupportBranchPrefix(), false).trim();
@@ -210,8 +215,10 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
             gitFetchRemoteAndCreate(gitFlowConfig.getProductionBranch());
             if (!keepBranch) {
                 // git branch -d support/...
-                gitPushDelete(supportBranch);
                 gitBranchDelete(supportBranch);
+                if (pushRemote) {
+                    gitPushDelete(supportBranch);
+                }
             }
         } catch (Exception e) {
             throw new MojoFailureException("support-finish", e);
