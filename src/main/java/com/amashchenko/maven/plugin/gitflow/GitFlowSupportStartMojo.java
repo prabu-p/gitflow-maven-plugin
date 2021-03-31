@@ -47,14 +47,6 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
     private boolean pushRemote;
 
     /**
-     * Tag name to use in non-interactive mode.
-     *
-     * @since 1.9.0
-     */
-    @Parameter(property = "tagName")
-    private String tagName;
-
-    /**
      * Branch name to use instead of the default.
      *
      * @since 1.16.0
@@ -96,7 +88,7 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
             // check uncommitted changes
             checkUncommittedChanges();
 
-            String tag = tagName;
+            String tag = supportBranch;
             if (settings.isInteractiveMode()) {
                 // get tags
                 String tagsStr = gitFindTags();
@@ -117,7 +109,7 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
             }
 
             if (!gitCheckTagExists(tag)) {
-                throw new MojoFailureException("The tag '" + tagName + "' doesn't exist.");
+                throw new MojoFailureException("The tag '" + supportBranch + "' doesn't exist.");
             }
 
             // Checkout tag
@@ -125,9 +117,6 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
 
             String version = getReleaseVersion();
             String branchName = version;
-            if (StringUtils.isNotBlank(supportBranch)) {
-                branchName = supportBranch;
-            }
 
             // git for-each-ref refs/heads/support/...
             final boolean supportBranchExists = gitCheckBranchExists(gitFlowConfig.getSupportBranchPrefix() + branchName);

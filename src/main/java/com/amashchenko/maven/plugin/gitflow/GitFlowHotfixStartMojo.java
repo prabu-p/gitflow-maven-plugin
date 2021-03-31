@@ -46,13 +46,12 @@ public class GitFlowHotfixStartMojo extends AbstractGitFlowMojo {
     private boolean pushRemote;
 
     /**
-     * Branch to start hotfix in non-interactive mode. Production branch or one of
-     * the support branches.
+     * Branch to start hotfix in non-interactive mode. Production branch or one of the support branches.
      *
      * @since 1.9.0
      */
-    @Parameter(property = "fromBranch")
-    private String fromBranch;
+    @Parameter(property = "hotfixBranch")
+    private String hotfixBranch;
 
     /**
      * Hotfix version to use in non-interactive mode.
@@ -141,9 +140,9 @@ public class GitFlowHotfixStartMojo extends AbstractGitFlowMojo {
                         throw new MojoFailureException("Branch name is blank.");
                     }
                 }
-            } else if (StringUtils.isNotBlank(fromBranch)) {
-                if (fromBranch.equals(gitFlowConfig.getProductionBranch()) || contains(supportBranches, fromBranch)) {
-                    branchName = fromBranch;
+            } else if (StringUtils.isNotBlank(hotfixBranch)) {
+                if (hotfixBranch.equals(gitFlowConfig.getProductionBranch()) || contains(supportBranches, hotfixBranch)) {
+                    branchName = hotfixBranch;
                 } else {
                     throw new MojoFailureException("The fromBranch is not production or support branch.");
                 }
