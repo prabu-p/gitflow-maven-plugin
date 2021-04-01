@@ -15,11 +15,6 @@
  */
 package com.amashchenko.maven.plugin.gitflow;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -29,6 +24,11 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.components.interactivity.PrompterException;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.cli.CommandLineException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The git flow hotfix finish mojo.
@@ -87,14 +87,13 @@ public class GitFlowHotfixFinishMojo extends AbstractGitFlowMojo {
     private String hotfixVersion;
 
     /**
-     * Hotfix branch to use in non-interactive mode. Must start with hotfix branch
-     * prefix. The hotfixBranch parameter will be used instead of
-     * {@link #hotfixVersion} if both are set.
+     * Hotfix branch to use in non-interactive mode. Must start with hotfix branch prefix. The sourceBranch parameter will be used instead of {@link
+     * #hotfixVersion} if both are set.
      *
      * @since 1.16.0
      */
-    @Parameter(property = "hotfixBranch")
-    private String hotfixBranch;
+    @Parameter(property = "sourceBranch")
+    private String sourceBranch;
 
     /**
      * Whether to make a GPG-signed tag.
@@ -140,14 +139,14 @@ public class GitFlowHotfixFinishMojo extends AbstractGitFlowMojo {
             String hotfixBranchName = null;
             if (settings.isInteractiveMode()) {
                 hotfixBranchName = promptBranchName();
-            } else if (StringUtils.isNotBlank(hotfixBranch)) {
-                if (!hotfixBranch.startsWith(gitFlowConfig.getHotfixBranchPrefix())) {
+            } else if (StringUtils.isNotBlank(sourceBranch)) {
+                if (!sourceBranch.startsWith(gitFlowConfig.getHotfixBranchPrefix())) {
                     throw new MojoFailureException("The hotfixBranch parameter doesn't start with hotfix branch prefix.");
                 }
-                if (!gitCheckBranchExists(hotfixBranch)) {
-                    throw new MojoFailureException("Hotfix branch with name '" + hotfixBranch + "' doesn't exist. Cannot finish hotfix.");
+                if (!gitCheckBranchExists(sourceBranch)) {
+                    throw new MojoFailureException("Hotfix branch with name '" + sourceBranch + "' doesn't exist. Cannot finish hotfix.");
                 }
-                hotfixBranchName = hotfixBranch;
+                hotfixBranchName = sourceBranch;
             } else if (StringUtils.isNotBlank(hotfixVersion)) {
                 final String branch = gitFlowConfig.getHotfixBranchPrefix() + hotfixVersion;
                 if (!gitCheckBranchExists(branch)) {

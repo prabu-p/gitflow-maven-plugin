@@ -21,10 +21,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.shared.release.versions.VersionParseException;
-import org.codehaus.plexus.components.interactivity.PrompterException;
 import org.codehaus.plexus.util.StringUtils;
-import org.codehaus.plexus.util.cli.CommandLineException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -251,18 +248,34 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
                 mvnRun(preReleaseGoals);
             }
 
-            String currentReleaseVersion = getReleaseVersion();
+            String version = releaseVersion;
+            if (StringUtils.isBlank(version)) {
+                version = getCurrentProjectVersion();
+                if (!tychoBuild) {
+                    GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(version);
+                    version = versionInfo.digitsVersionInfo().getPaddedVersion(0);
+                    versionInfo = new GitFlowVersionInfo(version);
+                    version = versionInfo.getNextVersion().getReleaseVersionString();
+                }
+                if (version == null) {
+                    throw new MojoFailureException("Cannot get default project version.");
+                }
+                if (settings.isInteractiveMode()) {
+                    version = getPromptReleaseVersion(version);
+                }
+            }
 
             Map<String, String> messageProperties = new HashMap<String, String>();
-            messageProperties.put("version", currentReleaseVersion);
+            messageProperties.put("version", version);
 
             if (useSnapshotInRelease) {
-                if (ArtifactUtils.isSnapshot(currentReleaseVersion)) {
-                    currentReleaseVersion = currentReleaseVersion.replace("-" + Artifact.SNAPSHOT_VERSION, "");
+                if (ArtifactUtils.isSnapshot(version)) {
+                    version = version.replace("-" + Artifact.SNAPSHOT_VERSION, "");
                 }
-                mvnSetVersions(currentReleaseVersion);
+                getLog().info("Updating release version " + version);
+                mvnSetVersions(version);
 
-                messageProperties.put("version", currentReleaseVersion);
+                messageProperties.put("version", version);
 
                 gitCommit(commitMessages.getReleaseFinishMessage(), messageProperties);
             }
@@ -385,51 +398,5 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
         } catch (Exception e) {
             throw new MojoFailureException("release-finish", e);
         }
-    }
-
-    private String getReleaseVersion() throws MojoFailureException, VersionParseException, CommandLineException {
-        // get current project version from pom
-        final String currentVersion = getCurrentProjectVersion();
-
-        String defaultVersion = null;
-        if (tychoBuild) {
-            defaultVersion = currentVersion;
-        } else {
-            // get default release version
-            defaultVersion = new GitFlowVersionInfo(currentVersion)
-                .getReleaseVersionString();
-        }
-
-        if (defaultVersion == null) {
-            throw new MojoFailureException(
-                "Cannot get default project version.");
-        }
-
-        String version = null;
-        if (settings.isInteractiveMode()) {
-            try {
-                while (version == null) {
-                    version = prompter.prompt("What is release version? ["
-                        + defaultVersion + "]");
-
-                    if (!"".equals(version)
-                        && (!GitFlowVersionInfo.isValidVersion(version) || !validBranchName(version))) {
-                        getLog().info("The version is not valid.");
-                        version = null;
-                    }
-                }
-            } catch (PrompterException e) {
-                throw new MojoFailureException("release-start", e);
-            }
-        } else {
-            version = releaseVersion;
-        }
-
-        if (StringUtils.isBlank(version)) {
-            getLog().info("Version is blank. Using default version.");
-            version = defaultVersion;
-        }
-
-        return version;
     }
 }

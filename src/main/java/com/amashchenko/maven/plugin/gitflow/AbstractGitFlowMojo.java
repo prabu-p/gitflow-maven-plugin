@@ -1004,22 +1004,42 @@ public abstract class AbstractGitFlowMojo extends AbstractMojo {
                         + gitFlowConfig.getOrigin() + "'.");
 
         CommandResult result = executeGitCommandExitCode("push", "--delete",
-                gitFlowConfig.getOrigin(), branchName);
+            gitFlowConfig.getOrigin(), branchName);
 
         if (result.getExitCode() != SUCCESS_EXIT_CODE) {
             getLog().warn(
-                    "There were some problems deleting remote branch '"
-                            + branchName + "' from '"
-                            + gitFlowConfig.getOrigin() + "'.");
+                "There were some problems deleting remote branch '"
+                    + branchName + "' from '"
+                    + gitFlowConfig.getOrigin() + "'.");
         }
     }
 
+    protected String getPromptReleaseVersion(String defaultVersion) throws MojoFailureException {
+        String version = null;
+        if (settings.isInteractiveMode()) {
+            try {
+                while (version == null) {
+                    version = prompter.prompt("What is release version? [" + defaultVersion + "]");
+                    if (!"".equals(version) && (!GitFlowVersionInfo.isValidVersion(version) || !validBranchName(version))) {
+                        getLog().info("The version is not valid.");
+                        version = null;
+                    }
+                }
+            } catch (Exception e) {
+                throw new MojoFailureException("read-version", e);
+            }
+        }
+
+        if (StringUtils.isBlank(version)) {
+            version = defaultVersion;
+        }
+        return version;
+    }
+
     /**
-     * Executes 'set' goal of versions-maven-plugin or 'set-version' of
-     * tycho-versions-plugin in case it is tycho build.
+     * Executes 'set' goal of versions-maven-plugin or 'set-version' of tycho-versions-plugin in case it is tycho build.
      *
-     * @param version
-     *            New version to set.
+     * @param version New version to set.
      * @throws MojoFailureException
      * @throws CommandLineException
      */

@@ -51,14 +51,14 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
      *
      * @since 1.16.0
      */
-    @Parameter(property = "supportBranch")
-    private String supportBranch;
+    @Parameter(property = "sourceBranch")
+    private String sourceBranch;
 
     /**
-     * Support version
+     * Support release version
      */
-    @Parameter(property = "supportVersion", defaultValue = "")
-    private String supportVersion = "";
+    @Parameter(property = "releaseVersion", defaultValue = "")
+    private String releaseVersion = "";
 
     /**
      * Whether to use snapshot in support.
@@ -88,7 +88,7 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
             // check uncommitted changes
             checkUncommittedChanges();
 
-            String tag = supportBranch;
+            String tag = sourceBranch;
             if (settings.isInteractiveMode()) {
                 // get tags
                 String tagsStr = gitFindTags();
@@ -109,13 +109,28 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
             }
 
             if (!gitCheckTagExists(tag)) {
-                throw new MojoFailureException("The tag '" + supportBranch + "' doesn't exist.");
+                throw new MojoFailureException("The tag '" + sourceBranch + "' doesn't exist.");
             }
 
             // Checkout tag
             gitCheckout(tag);
 
-            String version = getReleaseVersion();
+            String version = releaseVersion;
+            if (StringUtils.isBlank(version)) {
+                version = getCurrentProjectVersion();
+                if (!tychoBuild) {
+                    GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(version);
+                    version = versionInfo.digitsVersionInfo().getPaddedVersion(versionDigitToIncrement);
+                    versionInfo = new GitFlowVersionInfo(version);
+                    version = versionInfo.getNextVersion().getReleaseVersionString();
+                }
+                if (version == null) {
+                    throw new MojoFailureException("Cannot get default project version.");
+                }
+                if (settings.isInteractiveMode()) {
+                    version = getPromptReleaseVersion(version);
+                }
+            }
             String branchName = version;
 
             // git for-each-ref refs/heads/support/...
@@ -131,6 +146,7 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
                 version = version + "-" + Artifact.SNAPSHOT_VERSION;
             }
 
+            getLog().info("Updating support version " + version);
             mvnSetVersions(version);
             Map<String, String> properties = new HashMap<String, String>();
             properties.put("version", version);
@@ -149,54 +165,5 @@ public class GitFlowSupportStartMojo extends AbstractGitFlowMojo {
         } catch (VersionParseException e) {
             throw new MojoFailureException("support-start", e);
         }
-    }
-
-    private String getReleaseVersion() throws MojoFailureException, VersionParseException, CommandLineException {
-        // get current project version from pom
-        final String currentVersion = getCurrentProjectVersion();
-        String defaultVersion = null;
-        if (tychoBuild) {
-            defaultVersion = currentVersion;
-        } else {
-            // get default release version
-            GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(currentVersion).digitsVersionInfo();
-            defaultVersion = versionInfo.getReleaseVersionString();
-            int i = versionDigitToIncrement;
-            if (i > versionInfo.getDigits().size()) {
-                while (i > versionInfo.getDigits().size()) {
-                    defaultVersion = defaultVersion + ".0";
-                    i--;
-                }
-                versionInfo = new GitFlowVersionInfo(defaultVersion);
-            }
-            defaultVersion = versionInfo.getNextVersion().getReleaseVersionString();
-        }
-
-        if (defaultVersion == null) {
-            throw new MojoFailureException("Cannot get default project version.");
-        }
-
-        String version = null;
-        if (settings.isInteractiveMode()) {
-            try {
-                while (version == null) {
-                    version = prompter.prompt("What is release version? [" + defaultVersion + "]");
-                    if (!"".equals(version) && (!GitFlowVersionInfo.isValidVersion(version) || !validBranchName(version))) {
-                        getLog().info("The version is not valid.");
-                        version = null;
-                    }
-                }
-            } catch (PrompterException e) {
-                throw new MojoFailureException("support-start", e);
-            }
-        } else {
-            version = supportVersion;
-        }
-
-        if (StringUtils.isBlank(version)) {
-            getLog().info("Version is blank. Using default version " + defaultVersion);
-            version = defaultVersion;
-        }
-        return version;
     }
 }

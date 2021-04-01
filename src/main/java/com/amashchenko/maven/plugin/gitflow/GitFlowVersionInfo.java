@@ -15,17 +15,17 @@
  */
 package com.amashchenko.maven.plugin.gitflow;
 
-import java.util.List;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.shared.release.versions.DefaultVersionInfo;
 import org.apache.maven.shared.release.versions.VersionInfo;
 import org.apache.maven.shared.release.versions.VersionParseException;
 import org.codehaus.plexus.util.StringUtils;
 
+import java.util.List;
+
 /**
  * Git flow {@link VersionInfo} implementation. Adds few convenient methods.
- * 
+ *
  */
 public class GitFlowVersionInfo extends DefaultVersionInfo {
 
@@ -36,7 +36,7 @@ public class GitFlowVersionInfo extends DefaultVersionInfo {
 
     /**
      * Returns a new GitFlowVersionInfo that holds only digits in the version.
-     * 
+     *
      * @return Digits only GitFlowVersionInfo instance.
      * @throws VersionParseException
      */
@@ -46,7 +46,7 @@ public class GitFlowVersionInfo extends DefaultVersionInfo {
 
     /**
      * Validates version.
-     * 
+     *
      * @param version
      *            Version to validate.
      * @return <code>true</code> when version is valid, <code>false</code>
@@ -60,7 +60,7 @@ public class GitFlowVersionInfo extends DefaultVersionInfo {
 
     /**
      * Gets next SNAPSHOT version.
-     * 
+     *
      * @return Next SNAPSHOT version.
      */
     public String nextSnapshotVersion() {
@@ -70,7 +70,7 @@ public class GitFlowVersionInfo extends DefaultVersionInfo {
     /**
      * Gets next SNAPSHOT version. If index is <code>null</code> or not valid
      * then it delegates to {@link #getNextVersion()} method.
-     * 
+     *
      * @param index
      *            Which part of version to increment.
      * @return Next SNAPSHOT version.
@@ -103,7 +103,7 @@ public class GitFlowVersionInfo extends DefaultVersionInfo {
 
     /**
      * Gets version with appended feature name.
-     * 
+     *
      * @param featureName
      *            Feature name to append.
      * @return Version with appended feature name.
@@ -119,14 +119,34 @@ public class GitFlowVersionInfo extends DefaultVersionInfo {
 
     /**
      * Gets next hotfix version.
-     * 
+     *
      * @param preserveSnapshot
      *            Whether to preserve SNAPSHOT in the version.
      * @return Next version.
      */
     public String hotfixVersion(boolean preserveSnapshot) {
         return (preserveSnapshot && isSnapshot()) ? getNextVersion()
-                .getSnapshotVersionString() : getNextVersion()
-                .getReleaseVersionString();
+            .getSnapshotVersionString() : getNextVersion()
+            .getReleaseVersionString();
+    }
+
+    /**
+     * Get Padded version
+     *
+     * @param digits
+     * @return String
+     * @throws VersionParseException
+     */
+    public String getPaddedVersion(int digits) throws VersionParseException {
+        String defaultVersion = getReleaseVersionString();
+        int i = digits;
+        if (i > getDigits().size()) {
+            while (i > getDigits().size()) {
+                defaultVersion = defaultVersion + ".0";
+                i--;
+            }
+            defaultVersion = new GitFlowVersionInfo(defaultVersion).getReleaseVersionString();
+        }
+        return defaultVersion;
     }
 }

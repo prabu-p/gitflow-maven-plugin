@@ -50,16 +50,16 @@ public class GitFlowHotfixStartMojo extends AbstractGitFlowMojo {
      *
      * @since 1.9.0
      */
-    @Parameter(property = "hotfixBranch")
-    private String hotfixBranch;
+    @Parameter(property = "sourceBranch")
+    private String sourceBranch;
 
     /**
      * Hotfix version to use in non-interactive mode.
      *
      * @since 1.9.0
      */
-    @Parameter(property = "hotfixVersion")
-    private String hotfixVersion;
+    @Parameter(property = "releaseVersion")
+    private String releaseVersion;
 
     /**
      * Whether to use snapshot in hotfix.
@@ -140,9 +140,9 @@ public class GitFlowHotfixStartMojo extends AbstractGitFlowMojo {
                         throw new MojoFailureException("Branch name is blank.");
                     }
                 }
-            } else if (StringUtils.isNotBlank(hotfixBranch)) {
-                if (hotfixBranch.equals(gitFlowConfig.getProductionBranch()) || contains(supportBranches, hotfixBranch)) {
-                    branchName = hotfixBranch;
+            } else if (StringUtils.isNotBlank(sourceBranch)) {
+                if (sourceBranch.equals(gitFlowConfig.getProductionBranch()) || contains(supportBranches, sourceBranch)) {
+                    branchName = sourceBranch;
                 } else {
                     throw new MojoFailureException("The fromBranch is not production or support branch.");
                 }
@@ -157,16 +157,31 @@ public class GitFlowHotfixStartMojo extends AbstractGitFlowMojo {
                 gitFetchRemoteAndCompare(branchName);
             }
 
-            String version = getReleaseVersion();
+            String version = releaseVersion;
+            if (StringUtils.isBlank(version)) {
+                version = getCurrentProjectVersion();
+                if (!tychoBuild) {
+                    GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(version);
+                    version = versionInfo.digitsVersionInfo().getPaddedVersion(versionDigitToIncrement);
+                    versionInfo = new GitFlowVersionInfo(version);
+                    version = versionInfo.getNextVersion().getReleaseVersionString();
+                }
+                if (version == null) {
+                    throw new MojoFailureException("Cannot get default project version.");
+                }
+                if (settings.isInteractiveMode()) {
+                    version = getPromptReleaseVersion(version);
+                }
+            }
 
             // to finish hotfix on support branch
             String branchVersionPart = version.replace('/', '_');
 
             String hotfixBranchName = gitFlowConfig.getHotfixBranchPrefix()
-                    + branchVersionPart;
+                + branchVersionPart;
             if (!gitFlowConfig.getProductionBranch().equals(branchName)) {
                 hotfixBranchName = gitFlowConfig.getHotfixBranchPrefix()
-                        + branchName + "/" + branchVersionPart;
+                    + branchName + "/" + branchVersionPart;
             }
 
             // git for-each-ref refs/heads/hotfix/...
@@ -194,6 +209,7 @@ public class GitFlowHotfixStartMojo extends AbstractGitFlowMojo {
                         + " It is better to define it in the project's pom file.");
             }
 
+            getLog().info("Updating hotfix version " + version);
             // mvn versions:set -DnewVersion=... -DgenerateBackupPoms=false
             mvnSetVersions(projectVersion);
 
@@ -227,64 +243,5 @@ public class GitFlowHotfixStartMojo extends AbstractGitFlowMojo {
             }
         }
         return false;
-    }
-
-    private String getReleaseVersion() throws MojoFailureException, VersionParseException, CommandLineException {
-        // get current project version from pom
-        final String currentVersion = getCurrentProjectVersion();
-
-        String defaultVersion = null;
-        if (tychoBuild) {
-            defaultVersion = currentVersion;
-        } else {
-            // get default hotfix version
-            GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(currentVersion).digitsVersionInfo();
-            defaultVersion = versionInfo.getReleaseVersionString();
-            int i = versionDigitToIncrement;
-            if (i > versionInfo.getDigits().size()) {
-                while (i > versionInfo.getDigits().size()) {
-                    defaultVersion = defaultVersion + ".0";
-                    i--;
-                }
-                versionInfo = new GitFlowVersionInfo(defaultVersion);
-            }
-            defaultVersion = versionInfo.hotfixVersion(false);
-        }
-
-        if (defaultVersion == null) {
-            throw new MojoFailureException("Cannot get default project version.");
-        }
-
-        String version = null;
-        if (settings.isInteractiveMode()) {
-            try {
-                while (version == null) {
-                    version = prompter
-                        .prompt("What is the hotfix version? [" + defaultVersion + "]");
-
-                    if (!"".equals(version) && (!GitFlowVersionInfo.isValidVersion(version)
-                        || !validBranchName(version))) {
-                        getLog().info("The version is not valid.");
-                        version = null;
-                    }
-                }
-            } catch (PrompterException e) {
-                throw new MojoFailureException("hotfix-start", e);
-            }
-        } else {
-            if (StringUtils.isNotBlank(hotfixVersion)
-                && (!GitFlowVersionInfo.isValidVersion(hotfixVersion)
-                || !validBranchName(hotfixVersion))) {
-                throw new MojoFailureException("The hotfix version '" + hotfixVersion + "' is not valid.");
-            } else {
-                version = hotfixVersion;
-            }
-        }
-
-        if (StringUtils.isBlank(version)) {
-            getLog().info("Version is blank. Using default version.");
-            version = defaultVersion;
-        }
-        return version;
     }
 }

@@ -103,8 +103,8 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
     /**
      * Support Branch name
      */
-    @Parameter(property = "supportBranch")
-    private String supportBranch;
+    @Parameter(property = "sourceBranch")
+    private String sourceBranch;
 
     /**
      * {@inheritDoc}
@@ -117,25 +117,25 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
             // check uncommitted changes
             checkUncommittedChanges();
 
-            if (StringUtils.isBlank(supportBranch)) {
+            if (StringUtils.isBlank(sourceBranch)) {
                 // git for-each-ref --format='%(refname:short)' refs/heads/support/*
-                supportBranch = gitFindBranches(gitFlowConfig.getSupportBranchPrefix(), false).trim();
+                sourceBranch = gitFindBranches(gitFlowConfig.getSupportBranchPrefix(), false).trim();
                 if (fetchRemote) {
-                    supportBranch = gitFetchAndFindRemoteBranches(gitFlowConfig.getOrigin(),
+                    sourceBranch = gitFetchAndFindRemoteBranches(gitFlowConfig.getOrigin(),
                         gitFlowConfig.getSupportBranchPrefix(), false).trim();
-                    if (StringUtils.isBlank(supportBranch)) {
+                    if (StringUtils.isBlank(sourceBranch)) {
                         throw new MojoFailureException("There is no remote or local support branch.");
                     }
 
                     // remove remote name with slash from branch name
-                    supportBranch = supportBranch.substring(gitFlowConfig.getOrigin().length() + 1);
-                    gitCreateAndCheckout(supportBranch, gitFlowConfig.getOrigin() + "/" + supportBranch);
+                    sourceBranch = sourceBranch.substring(gitFlowConfig.getOrigin().length() + 1);
+                    gitCreateAndCheckout(sourceBranch, gitFlowConfig.getOrigin() + "/" + sourceBranch);
                 } else {
                     throw new MojoFailureException("There is no support branch.");
                 }
             }
 
-            gitCheckout(supportBranch);
+            gitCheckout(sourceBranch);
 
             // check snapshots dependencies
             if (!allowSnapshots) {
@@ -144,7 +144,7 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
 
             if (fetchRemote) {
                 // fetch and check remote
-                gitFetchRemoteAndCompare(supportBranch);
+                gitFetchRemoteAndCompare(sourceBranch);
             }
 
             if (!skipTestProject) {
@@ -198,16 +198,16 @@ public class GitFlowSupportFinishMojo extends AbstractGitFlowMojo {
             }
 
             if (pushRemote) {
-                gitPush(supportBranch, !skipTag);
+                gitPush(sourceBranch, !skipTag);
             }
 
             // Checkout prod branch
             gitFetchRemoteAndCreate(gitFlowConfig.getProductionBranch());
             if (!keepBranch) {
                 // git branch -d support/...
-                gitBranchDelete(supportBranch);
+                gitBranchDelete(sourceBranch);
                 if (pushRemote) {
-                    gitPushDelete(supportBranch);
+                    gitPushDelete(sourceBranch);
                 }
             }
         } catch (Exception e) {

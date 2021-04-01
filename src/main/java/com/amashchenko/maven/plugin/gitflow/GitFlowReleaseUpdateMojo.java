@@ -21,10 +21,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.shared.release.versions.VersionParseException;
-import org.codehaus.plexus.components.interactivity.PrompterException;
 import org.codehaus.plexus.util.StringUtils;
-import org.codehaus.plexus.util.cli.CommandLineException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -96,14 +93,6 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
     private boolean releaseMergeFFOnly = false;
 
     /**
-     * Whether to remove qualifiers from the next development version.
-     *
-     * @since 1.6.0
-     */
-    @Parameter(property = "digitsOnlyDevVersion", defaultValue = "false")
-    private boolean digitsOnlyDevVersion = false;
-
-    /**
      * Development version to use instead of the default next development version in non interactive mode.
      *
      * @since 1.6.0
@@ -120,13 +109,10 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
     private String releaseVersion = "";
 
     /**
-     * Which digit to increment in the next development version. Starts from zero.
-     *
-     * @since 1.6.0
+     * Release candidate suffix
      */
-    @Parameter(property = "versionDigitToIncrement")
-    private Integer versionDigitToIncrement;
-
+    @Parameter(property = "releaseVersion", defaultValue = "RC")
+    private String rcSuffix = "RC";
 
     /**
      * Maven goals to execute in the release branch before merging into the production branch.
@@ -238,14 +224,32 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
                 mvnRun(preReleaseGoals);
             }
 
-            String currentReleaseVersion = getReleaseVersion();
-            Map<String, String> messageProperties = new HashMap<>();
-            if (ArtifactUtils.isSnapshot(currentReleaseVersion)) {
-                currentReleaseVersion = currentReleaseVersion.replace("-" + Artifact.SNAPSHOT_VERSION, "");
+            String version = releaseVersion;
+            if (StringUtils.isBlank(version)) {
+                version = getCurrentProjectVersion();
+                if (!tychoBuild) {
+                    GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(version);
+                    version = versionInfo.getReleaseVersionString();
+                    if (!version.contains("-" + rcSuffix)) {
+                        version = version + "-" + rcSuffix + "1";
+                    }
+                }
+                if (version == null) {
+                    throw new MojoFailureException("Cannot get default project version.");
+                }
+                if (settings.isInteractiveMode()) {
+                    version = getPromptReleaseVersion(version);
+                }
             }
 
-            mvnSetVersions(currentReleaseVersion);
-            messageProperties.put("version", currentReleaseVersion);
+            Map<String, String> messageProperties = new HashMap<>();
+            if (ArtifactUtils.isSnapshot(version)) {
+                version = version.replace("-" + Artifact.SNAPSHOT_VERSION, "");
+            }
+
+            getLog().info("Updating release version " + version);
+            mvnSetVersions(version);
+            messageProperties.put("version", version);
             gitCommit(commitMessages.getReleaseUpdateMessage(), messageProperties);
 
             // get current project version from pom
@@ -270,15 +274,13 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
 
             // get next snapshot version
             GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(currentVersion);
-            if (digitsOnlyDevVersion) {
-                versionInfo = versionInfo.digitsVersionInfo();
-            }
-            final String nextSnapshotVersion = versionInfo.nextSnapshotVersion(versionDigitToIncrement);
+            final String nextSnapshotVersion = versionInfo.nextSnapshotVersion();
 
             if (StringUtils.isBlank(nextSnapshotVersion)) {
                 throw new MojoFailureException("Next snapshot version is blank.");
             }
 
+            getLog().info("Updating next snapshot version " + nextSnapshotVersion);
             // mvn versions:set -DnewVersion=... -DgenerateBackupPoms=false
             mvnSetVersions(nextSnapshotVersion);
 
@@ -300,44 +302,4 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
         }
     }
 
-    private String getReleaseVersion() throws MojoFailureException, VersionParseException, CommandLineException {
-        // get current project version from pom
-        final String currentVersion = getCurrentProjectVersion();
-
-        String defaultVersion = null;
-        if (tychoBuild) {
-            defaultVersion = currentVersion;
-        } else {
-            // get default release version
-            defaultVersion = new GitFlowVersionInfo(currentVersion).getReleaseVersionString();
-        }
-
-        if (defaultVersion == null) {
-            throw new MojoFailureException("Cannot get default project version.");
-        }
-
-        String version = null;
-        if (settings.isInteractiveMode()) {
-            try {
-                while (version == null) {
-                    version = prompter.prompt("What is release version? [" + defaultVersion + "]");
-                    if (!"".equals(version) && (!GitFlowVersionInfo.isValidVersion(version) || !validBranchName(version))) {
-                        getLog().info("The version is not valid.");
-                        version = null;
-                    }
-                }
-            } catch (PrompterException e) {
-                throw new MojoFailureException("release-update", e);
-            }
-        } else {
-            version = releaseVersion;
-        }
-
-        if (StringUtils.isBlank(version)) {
-            getLog().info("Version is blank. Using default version.");
-            version = defaultVersion;
-        }
-
-        return version;
-    }
 }
