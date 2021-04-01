@@ -194,6 +194,10 @@ public class GitFlowReleaseStartMojo extends AbstractGitFlowMojo {
             String version = releaseVersion;
             if (StringUtils.isBlank(version)) {
                 version = getCurrentProjectVersion();
+                if (!tychoBuild) {
+                    GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(version);
+                    version = versionInfo.getReleaseVersionString();
+                }
                 if (version == null) {
                     throw new MojoFailureException("Cannot get default project version.");
                 }
