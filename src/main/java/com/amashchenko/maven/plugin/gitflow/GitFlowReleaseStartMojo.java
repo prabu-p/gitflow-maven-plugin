@@ -229,7 +229,6 @@ public class GitFlowReleaseStartMojo extends AbstractGitFlowMojo {
             if (commitDevelopmentVersionAtStart) {
                 // mvn versions:set ...
                 // git commit -a -m ...
-                getLog().info("Updating release version " + projectVersion);
                 commitProjectVersion(projectVersion, commitMessages.getReleaseStartMessage());
 
                 // git branch release/... develop
@@ -249,7 +248,6 @@ public class GitFlowReleaseStartMojo extends AbstractGitFlowMojo {
 
                 // mvn versions:set ...
                 // git commit -a -m ...
-                getLog().info("Updating release version " + projectVersion);
                 commitProjectVersion(projectVersion, commitMessages.getReleaseStartMessage());
             }
 
