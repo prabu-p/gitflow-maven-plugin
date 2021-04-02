@@ -111,8 +111,8 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
     /**
      * Release candidate suffix
      */
-    @Parameter(property = "releaseVersion", defaultValue = "RC")
-    private String rcSuffix = "RC";
+    @Parameter(property = "rcTagName", defaultValue = "RC")
+    private String rcTagName = "RC";
 
     /**
      * Maven goals to execute in the release branch before merging into the production branch.
@@ -230,8 +230,8 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
                 if (!tychoBuild) {
                     GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(version);
                     version = versionInfo.getReleaseVersionString();
-                    if (!version.contains("-" + rcSuffix)) {
-                        version = version + "-" + rcSuffix + "1";
+                    if (!version.contains("-" + rcTagName)) {
+                        version = version + "-" + rcTagName + "1";
                     }
                 }
                 if (version == null) {
@@ -247,7 +247,6 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
                 version = version.replace("-" + Artifact.SNAPSHOT_VERSION, "");
             }
 
-            getLog().info("Updating release version " + version);
             mvnSetVersions(version);
             messageProperties.put("version", version);
             gitCommit(commitMessages.getReleaseUpdateMessage(), messageProperties);
@@ -280,7 +279,6 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
                 throw new MojoFailureException("Next snapshot version is blank.");
             }
 
-            getLog().info("Updating next snapshot version " + nextSnapshotVersion);
             // mvn versions:set -DnewVersion=... -DgenerateBackupPoms=false
             mvnSetVersions(nextSnapshotVersion);
 
