@@ -255,7 +255,7 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
                     GitFlowVersionInfo versionInfo = new GitFlowVersionInfo(version);
                     version = versionInfo.digitsVersionInfo().getPaddedVersion(0);
                     versionInfo = new GitFlowVersionInfo(version);
-                    version = versionInfo.getNextVersion().getReleaseVersionString();
+                    version = versionInfo.getReleaseVersionString();
                 }
                 if (version == null) {
                     throw new MojoFailureException("Cannot get default project version.");
