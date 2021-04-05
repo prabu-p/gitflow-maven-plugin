@@ -30,9 +30,8 @@ public class CommitMessages {
 
     private String releaseStartMessage;
     private String releaseFinishMessage;
-    private String releaseUpdateMessage;
 
-    private String releaseVersionUpdateMessage;
+    private String developmentVersionUpdateMessage;
 
     private String releaseFinishMergeMessage;
     private String releaseFinishDevMergeMessage;
@@ -64,23 +63,22 @@ public class CommitMessages {
         featureStartMessage = "Update versions for feature branch";
         featureFinishMessage = "Update versions for development branch";
 
-        hotfixStartMessage = "Update versions for hotfix";
-        hotfixFinishMessage = "Update for next development version";
+        hotfixStartMessage = "[Hotfix] Updated hotfix version @{version}";
+        hotfixFinishMessage = "[Hotfix] Updated hotfix version @{version}";
 
-        hotfixVersionUpdateMessage = "Update to hotfix version";
+        hotfixVersionUpdateMessage = "Updated develop version to avoid merge conflicts";
 
-        releaseStartMessage = "Update versions for release";
-        releaseFinishMessage = "Update for next development version";
-        releaseUpdateMessage = "Update versions for release";
+        releaseStartMessage = "[Release] Updated release version @{version}";
+        releaseFinishMessage = "[Release] Updated release version @{version}";
 
-        releaseVersionUpdateMessage = "Update for next development version";
+        developmentVersionUpdateMessage = "Updated next development version @{version}";
 
         releaseFinishMergeMessage = "";
         releaseFinishDevMergeMessage = "";
 
-        tagHotfixMessage = "Tag hotfix";
-        tagReleaseMessage = "Tag release";
-        tagSupportMessage = "Tag support";
+        tagHotfixMessage = "Tag Hotfix @{version}";
+        tagReleaseMessage = "Tag Release @{version}";
+        tagSupportMessage = "Tag Support @{version}";
 
         updateDevToAvoidConflictsMessage = "Update develop to production version to avoid merge conflicts";
         updateDevBackPreMergeStateMessage = "Update develop version back to pre-merge state";
@@ -91,8 +89,8 @@ public class CommitMessages {
         updateFeatureBackMessage = "Update feature branch back to feature version";
         featureFinishIncrementVersionMessage = "Increment feature version";
 
-        supportStartMessage = "Update versions for support";
-        supportFinishMessage = "Update versions for support";
+        supportStartMessage = "[Support] Updated support version @{version}";
+        supportFinishMessage = "[Support] Updated support version @{version}";
     }
 
     /**
@@ -186,19 +184,18 @@ public class CommitMessages {
     }
 
     /**
-     * @param releaseFinishMessage
-     *            the releaseFinishMessage to set
+     * @param releaseFinishMessage the releaseFinishMessage to set
      */
     public void setReleaseFinishMessage(String releaseFinishMessage) {
         this.releaseFinishMessage = releaseFinishMessage;
     }
 
-    public String getReleaseVersionUpdateMessage() {
-        return releaseVersionUpdateMessage;
+    public String getDevelopmentVersionUpdateMessage() {
+        return developmentVersionUpdateMessage;
     }
 
-    public void setReleaseVersionUpdateMessage(String releaseVersionUpdateMessage) {
-        this.releaseVersionUpdateMessage = releaseVersionUpdateMessage;
+    public void setDevelopmentVersionUpdateMessage(String developmentVersionUpdateMessage) {
+        this.developmentVersionUpdateMessage = developmentVersionUpdateMessage;
     }
 
     /**
@@ -454,11 +451,4 @@ public class CommitMessages {
         this.tagSupportMessage = tagSupportMessage;
     }
 
-    public String getReleaseUpdateMessage() {
-        return releaseUpdateMessage;
-    }
-
-    public void setReleaseUpdateMessage(String releaseUpdateMessage) {
-        this.releaseUpdateMessage = releaseUpdateMessage;
-    }
 }

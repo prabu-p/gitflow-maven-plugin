@@ -249,7 +249,7 @@ public class GitFlowReleaseUpdateMojo extends AbstractGitFlowMojo {
 
             mvnSetVersions(version);
             messageProperties.put("version", version);
-            gitCommit(commitMessages.getReleaseUpdateMessage(), messageProperties);
+            gitCommit(commitMessages.getReleaseFinishMessage(), messageProperties);
 
             // get current project version from pom
             final String currentVersion = getCurrentProjectVersion();
