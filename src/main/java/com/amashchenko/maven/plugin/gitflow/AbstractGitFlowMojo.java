@@ -872,7 +872,7 @@ public abstract class AbstractGitFlowMojo extends AbstractMojo {
                 + branchName);
         } else {
             gitCheckout(branchName);
-            executeGitCommand("pull");
+            executeGitCommand("pull", gitFlowConfig.getOrigin(), branchName);
         }
     }
 
