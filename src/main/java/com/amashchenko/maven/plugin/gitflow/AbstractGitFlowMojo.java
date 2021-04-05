@@ -863,13 +863,16 @@ public abstract class AbstractGitFlowMojo extends AbstractMojo {
             throws MojoFailureException, CommandLineException {
         if (!gitCheckBranchExists(branchName)) {
             getLog().info(
-                    "Local branch '"
-                            + branchName
-                            + "' doesn't exist. Trying to fetch and check it out from '"
-                            + gitFlowConfig.getOrigin() + "'.");
+                "Local branch '"
+                    + branchName
+                    + "' doesn't exist. Trying to fetch and check it out from '"
+                    + gitFlowConfig.getOrigin() + "'.");
             gitFetchRemote(branchName);
             gitCreateAndCheckout(branchName, gitFlowConfig.getOrigin() + "/"
-                    + branchName);
+                + branchName);
+        } else {
+            gitCheckout(branchName);
+            executeGitCommand("pull");
         }
     }
 
